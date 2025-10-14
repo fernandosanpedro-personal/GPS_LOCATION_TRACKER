@@ -10,19 +10,27 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Configuración DB (LowDB con JSON)
 const adapter = new JSONFile('db.json');
 const db = new Low(adapter);
 
+// Función para asegurar que la base está inicializada
 async function initDB() {
   await db.read();
-  db.data = db.data || { devices: [] };
-  await db.write();
+  if (!db.data) {
+    db.data = { devices: [] }; // ✅ default data
+    await db.write();
+  }
 }
+
+// Inicializar DB antes de arrancar el servidor
 initDB();
 
+// Middlewares
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// WebSocket para recibir ubicaciones en tiempo real
 io.on('connection', (socket) => {
   socket.on('location', async (data) => {
     await db.read();
@@ -41,10 +49,12 @@ io.on('connection', (socket) => {
   });
 });
 
+// API REST: obtener dispositivo y su historial
 app.get('/api/devices', async (req, res) => {
   await db.read();
   res.json(db.data.devices);
 });
 
+// Arrancar servidor
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log('Server running on', PORT));
+server.listen(PORT, () => console.log('Server running on port', PORT));
