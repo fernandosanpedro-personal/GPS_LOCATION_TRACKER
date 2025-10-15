@@ -1,2 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Location Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!DOCTYPE html><html><body><h1>Live Tracker</h1></body></html>
+  <!-- Leaflet CSS -->
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+4J8gG3/bOBhE2wE8p4nH3UX0rD6v0wMwJgCj+7r0="
+    crossorigin=""
+  />
+
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+    .device-label {
+      background: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j8Mk1l9gH6kBxKuX3sI5Gucs5cjox96D65Yi4rA="
+    crossorigin=""
+  ></script>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    // Inicializar mapa centrado en España
+    const map = L.map('map').setView([40.4168, -3.7038], 6);
+
+    // Capa del mapa (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Diccionario para guardar los marcadores por deviceId
+    const markers = {};
+
+    // Conectar con WebSocket
+    const socket = io();
+
+    // Cuando llega una nueva ubicación
+    socket.on('locationUpdate', (data) => {
+      const { deviceId, lat, lng } = data;
+
+      if (!markers
